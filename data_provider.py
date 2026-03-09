@@ -2,8 +2,11 @@ import ccxt
 import pandas as pd
 
 class DataProvider:
-    def __init__(self):
-        self.exchange = ccxt.binance()
+    def __init__(self, exchange_id='binance'):
+        if exchange_id == 'binanceus':
+            self.exchange = ccxt.binanceus()
+        else:
+            self.exchange = ccxt.binance()
 
     def fetch_ohlcv(self, symbol, timeframe='1h', limit=500):
         """

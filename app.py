@@ -11,6 +11,9 @@ st.title("📈 Binance Advanced Chart")
 
 # Sidebar for controls
 st.sidebar.header("Data Settings")
+exchange_type = st.sidebar.selectbox("Select Exchange", ["Binance (Global)", "Binance US (Use if Global fails)"])
+exchange_id = 'binance' if exchange_type == "Binance (Global)" else 'binanceus'
+
 coin = st.sidebar.selectbox("Select Coin", ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"])
 timeframe = st.sidebar.selectbox("Select Timeframe", ["1m", "5m", "1h", "4h", "1d"], index=2)
 limit = st.sidebar.slider("Number of Candles", min_value=100, max_value=1500, value=500)
@@ -81,8 +84,8 @@ params = {
 }
 
 @st.cache_data(ttl=60)
-def get_data(symbol, tf, lim, p):
-    provider = DataProvider()
+def get_data(symbol, tf, lim, p, ex_id):
+    provider = DataProvider(exchange_id=ex_id)
     try:
         df = provider.fetch_ohlcv(symbol, timeframe=tf, limit=lim)
         if df is not None:
@@ -92,7 +95,7 @@ def get_data(symbol, tf, lim, p):
     except Exception as e:
         return None, str(e)
 
-data, error_msg = get_data(coin, timeframe, limit, params)
+data, error_msg = get_data(coin, timeframe, limit, params, exchange_id)
 
 if data is not None and not data.empty:
     # Build dynamic layout
@@ -187,6 +190,8 @@ if data is not None and not data.empty:
     
     st.info("💡 팁: 설정을 변경하면 실시간으로 차트가 업데이트되며, 보조지표 순서도 드래그하여 조정할 수 있습니다.")
 else:
-    st.error("데이터를 불러오지 못했습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요.")
+    st.error("데이터를 불러오지 못했습니다. 인터넷 연결을 확인하거나 바이낸스 US로 변경해보세요.")
     if error_msg:
         st.warning(f"Error Details: {error_msg}")
+        if "451" in error_msg:
+            st.info("💡 **Tip**: 현재 Streamlit Cloud의 위치가 바이낸스 글로벌 이용 제한 지역(미국 등)으로 감지되고 있습니다. 왼쪽 사이드바의 **Select Exchange**에서 **Binance US**를 선택해보세요.")
