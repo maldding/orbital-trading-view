@@ -83,13 +83,16 @@ params = {
 @st.cache_data(ttl=60)
 def get_data(symbol, tf, lim, p):
     provider = DataProvider()
-    df = provider.fetch_ohlcv(symbol, timeframe=tf, limit=lim)
-    if df is not None:
-        calc = IndicatorCalculator()
-        df = calc.add_indicators(df, p)
-    return df
+    try:
+        df = provider.fetch_ohlcv(symbol, timeframe=tf, limit=lim)
+        if df is not None:
+            calc = IndicatorCalculator()
+            df = calc.add_indicators(df, p)
+        return df, None
+    except Exception as e:
+        return None, str(e)
 
-data = get_data(coin, timeframe, limit, params)
+data, error_msg = get_data(coin, timeframe, limit, params)
 
 if data is not None and not data.empty:
     # Build dynamic layout
@@ -121,7 +124,7 @@ if data is not None and not data.empty:
     
     # EMAs
     colors = ['orange', 'cyan', 'magenta']
-    for i, period in enumerate(ema_periods):
+    for i, period in enumerate(params['ema_periods']):
         col_name = f'EMA_{period}'
         if col_name in data.columns:
             fig.add_trace(go.Scatter(x=data['timestamp'], y=data[col_name], 
@@ -185,3 +188,5 @@ if data is not None and not data.empty:
     st.info("💡 팁: 설정을 변경하면 실시간으로 차트가 업데이트되며, 보조지표 순서도 드래그하여 조정할 수 있습니다.")
 else:
     st.error("데이터를 불러오지 못했습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요.")
+    if error_msg:
+        st.warning(f"Error Details: {error_msg}")

@@ -20,7 +20,7 @@ class DataProvider:
             return df
         except Exception as e:
             print(f"Error fetching data: {e}")
-            return None
+            raise e
 
 if __name__ == "__main__":
     # Test data fetching
